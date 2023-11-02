@@ -87,8 +87,8 @@ pipeline {
         stage ("Upload Image to DockerHub"){
 			steps {
 				script {
-					docker.withRegistry(' ',registryCredential){
-                        dockerImage.push("V-$BUILD_NUMBER")
+					docker.withRegistry('',registryCredential){
+                        dockerImage.push("V$BUILD_NUMBER")
                         dockerImage.push('latest')
 
                     }
@@ -97,14 +97,14 @@ pipeline {
 		}
         stage ("Remove Unused Docker"){
 			steps {
-					sh" docker rmi $registry:V-$BUILD_NUMBER"
+					sh" docker rmi $registry:$BUILD_NUMBER"
 			}
 		}
 
         stage ("Kubernetes Deploy"){
             agent{label 'KOPS'}
                 steps { 
-					    sh" helm upgrade --install --force vprofile-stack helm/vprofilecharts --set appimage=${registry}:V-${$BUILD_NUMBER} --namespace prod"
+					    sh" helm upgrade --install --force vprofile-stack helm/vprofilecharts --set appimage=${registry}:${$BUILD_NUMBER}) --namespace prod"
 			}
 		}
 		
