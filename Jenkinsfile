@@ -43,9 +43,39 @@ pipeline {
 			steps{
 				sh 'mvn checkstyle:checkstyle' 
 			}
-		
+            
+            post {
+                success {
+                    echo 'Generated Analysis Result'
+                }
+            }		
 		}
-		
+
+        stage ("Build App Image"){
+			steps {
+				script {
+					dockerImage = docker.build registry + ":V-$BUILD_NUMBER"
+				}
+			}
+		}
+
+        stage ("Upload Image to DockerHub"){
+			steps {
+				script {
+					docker.withRegistry('',registryCredential){
+                        dockerImage.push("V$BUILD_NUMBER")
+                        dockerImage.push('latest')
+
+                    }
+				}
+			}
+		}
+        stage ("Remove Unused Docker"){
+			steps {
+					sh" docker rmi $registry:V$BUILD_NUMBER"
+			}
+		}
+
 		stage ('Sonar Analysis'){
 			environment {
 				scannerHome = tool 'sonar4.7'    
@@ -73,31 +103,6 @@ pipeline {
 				
 				}
 			
-			}
-		}
-
-        stage ("Build App Image"){
-			steps {
-				script {
-					dockerImage = docker.build registry + ":V-$BUILD_NUMBER"
-				}
-			}
-		}
-
-        stage ("Upload Image to DockerHub"){
-			steps {
-				script {
-					docker.withRegistry('',registryCredential){
-                        dockerImage.push("V$BUILD_NUMBER")
-                        dockerImage.push('latest')
-
-                    }
-				}
-			}
-		}
-        stage ("Remove Unused Docker"){
-			steps {
-					sh" docker rmi $registry:V$BUILD_NUMBER"
 			}
 		}
 
